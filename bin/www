@@ -5,6 +5,7 @@
  */
 
 var app = require('../app');
+var wss = require('../wss');
 var debug = require('debug')('demo:server');
 var http = require('http');
 var config = require('../config');
@@ -21,6 +22,8 @@ var port = normalizePort(config.port || '3000');
  */
 
 var server = http.createServer(app.callback());
+
+wss(server);
 
 /**
  * Listen on provided port, on all network interfaces.

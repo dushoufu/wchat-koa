@@ -2,4 +2,11 @@ extends layout
 
 block content
   h1= title
-  p Welcome to #{title}
+  form(method="POST", action="/api/register")
+    label 用户名：
+      input(type="text", name="username")
+    br
+    label 密码：
+      input(type="text", name="password")
+    br
+    input(type="submit", value="注册")

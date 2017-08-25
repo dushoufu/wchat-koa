@@ -4,10 +4,16 @@ const views = require('koa-views')
 const json = require('koa-json')
 const onerror = require('koa-onerror')
 const bodyparser = require('koa-bodyparser')
+const session = require('koa-session')
 const logger = require('koa-logger')
 
 const index = require('./routes/index')
 const users = require('./routes/users')
+const auth = require('./routes/auth')
+
+const config = require('./config')
+
+app.keys = ['some secret hurr'];
 
 // error handler
 onerror(app)
@@ -32,8 +38,19 @@ app.use(async (ctx, next) => {
   console.log(`${ctx.method} ${ctx.url} - ${ms}ms`)
 })
 
-// routes
+// session
+app.use(session(app))
+
+// template
 app.use(index.routes(), index.allowedMethods())
+// api
+app.use(auth.routes(), auth.allowedMethods())
 app.use(users.routes(), users.allowedMethods())
+
+// mongo
+const MongoClient = require('mongodb').MongoClient
+MongoClient.connect(config.mongo_host, (err, db) => {
+
+})
 
 module.exports = app
