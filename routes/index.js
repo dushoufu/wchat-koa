@@ -1,19 +1,15 @@
 const router = require('koa-router')()
+const api = require('../api')
 
-router.get('/', async (ctx, next) => {
-  await ctx.render('index', {
-    title: 'Hello Koa 222222!'
+module.exports = app => {
+  // api
+  api(router)
+  // template
+  router.get('/', async (ctx, next) => {
+    await ctx.render('index', {
+      title: 'Hello Koa 2!'
+    })
   })
-})
 
-router.get('/string', async (ctx, next) => {
-  ctx.body = 'koa2 string'
-})
-
-router.get('/json', async (ctx, next) => {
-  ctx.body = {
-    title: 'koa2 json'
-  }
-})
-
-module.exports = router
+  app.use(router.routes(), router.allowedMethods())
+}

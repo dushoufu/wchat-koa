@@ -2,7 +2,7 @@ extends layout
 
 block content
   h1= title
-  form(method="POST", action="/api/register")
+  form(method="POST", action="/api/auth/register")
     label 用户名：
       input(type="text", name="username")
     br
@@ -10,3 +10,11 @@ block content
       input(type="text", name="password")
     br
     input(type="submit", value="注册")
+  form(method="POST", action="/api/auth/login")
+    label 用户名：
+      input(type="text", name="username")
+    br
+    label 密码：
+      input(type="text", name="password")
+    br
+    input(type="submit", value="登录")

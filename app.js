@@ -7,13 +7,22 @@ const bodyparser = require('koa-bodyparser')
 const session = require('koa-session')
 const logger = require('koa-logger')
 
-const index = require('./routes/index')
-const users = require('./routes/users')
-const auth = require('./routes/auth')
-
+const routes = require('./routes')
 const config = require('./config')
 
 app.keys = ['some secret hurr'];
+
+// cors
+app.use(async (ctx, next) => {
+  ctx.set({
+    // 跨域cookie 不能为通配符 *
+    'Access-Control-Allow-Origin': config.allow_origin,
+    'Access-Control-Allow-Methods': 'GET,POST',
+    // 跨域cookie必须为true
+    'Access-Control-Allow-Credentials': true
+  })
+  await next()
+})
 
 // error handler
 onerror(app)
@@ -41,16 +50,7 @@ app.use(async (ctx, next) => {
 // session
 app.use(session(app))
 
-// template
-app.use(index.routes(), index.allowedMethods())
-// api
-app.use(auth.routes(), auth.allowedMethods())
-app.use(users.routes(), users.allowedMethods())
-
-// mongo
-const MongoClient = require('mongodb').MongoClient
-MongoClient.connect(config.mongo_host, (err, db) => {
-
-})
+// routes
+routes(app)
 
 module.exports = app
