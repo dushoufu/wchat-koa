@@ -32,22 +32,20 @@ module.exports = router => {
   })
 
   router.get('/api/auth/logout', async (ctx, next) => {
-    if (!ctx.session.isNew) {
-      ctx.session = null
-    }
-    ctx.body = { code: 0, message: '已退出登录' }
+    ctx.body = await User.logout(ctx)
   })
 
   router.get('/api/auth/check', async (ctx, next) => {
-    ctx.body = ctx.session.isNew ? { code: 10001, message: '未登陆' } : { code: 0, message: '已登录' }
+    ctx.body = await User.check(ctx)
   })
 }
 
 // 检查登录态
 exports.check = async (ctx, next) => {
-  if (ctx.session.isNew) {
-    ctx.body = { code: 10001, message: '未登陆' }
-  } else {
+  const res = await User.check(ctx)
+  if (res.code === 0) {
     next()
+  } else {
+    ctx.body = res
   }
 }

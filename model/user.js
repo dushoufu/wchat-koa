@@ -5,6 +5,8 @@ const userSchema = new mongoose.Schema({
   email: String,
   password: String,
 
+  online: { type: Boolean, default: false },         // 在线状态
+
   name: { type: String, default: '默认昵称' },        // 用户昵称
   age: { type: Number, default: Math.round(Math.random() * 100) },
   sex: { type: String, default: '女' },
@@ -23,6 +25,7 @@ userSchema.statics.register = async function (ctx, user) {
     return { code: 99999, message: '用户名已存在' }
   }
 
+  user.online = true
   const result = await user.save()
   user.password = null
   ctx.session.user = user
@@ -34,11 +37,31 @@ userSchema.statics.register = async function (ctx, user) {
 userSchema.statics.login = async function (ctx, user) {
   const doc = await this.findOne(user)
   if (doc) {
+    await this.updateOne(user, { online: true })
     user.password = null
     ctx.session.user = user
     return { code: 0, message: '登录成功' }
   }
   return { code: 99999, message: '登陆失败' }
+}
+
+// logout
+userSchema.statics.logout = async function (ctx) {
+  if (!ctx.session.isNew) {
+    await this.updateOne({ username: ctx.session.user.username }, { online: false })
+    ctx.session = null
+  }
+  return { code: 0, message: '已退出登录' }
+}
+
+// check
+userSchema.statics.check = async function (ctx) {
+  if (!ctx.session.isNew) {
+    await this.updateOne({ username: ctx.session.user.username }, { online: true })
+    return { code: 0, message: '已登录' }
+  }
+  await this.updateOne({ username: ctx.session.user.username }, { online: false })
+  return { code: 10001, message: '未登陆' }
 }
 
 module.exports = mongoose.model('User', userSchema)
