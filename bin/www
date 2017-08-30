@@ -10,7 +10,7 @@ connectMongo(_ => {
 
   const server = http.createServer(app.callback())
 
-  wss(server)
+  wss(server, app)
 
   server.listen(port)
   server.on('error', onError)
