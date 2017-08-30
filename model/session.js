@@ -3,6 +3,7 @@ const mongoose = require('mongoose')
 const sessionSchema = new mongoose.Schema({
   name: { type: String, default: '无主题' },
   members: [String],
+  messages: [String],
   create_time: { type: Date, default: Date.now }
 })
 
@@ -12,8 +13,18 @@ sessionSchema.statics.create = async session => {
   return { code: 0, id: doc._id }
 }
 
+// 添加消息记录
+sessionSchema.statics.addMessage = async (sessionID, message) => {
+  const doc = await this.findOne({ _id: sessionID })
+  if (doc) {
+    const messages = doc.messages || []
+    messages.push(JSON.stringify(message))
+    await this.updateOne({ _id: sessionID }, { messages })
+  }
+}
+
 // 删除会话(删除会话中的成员)
-sessionSchema.statics.delete = async (sessionID, username) => {
+sessionSchema.statics.deleteMember = async (sessionID, username) => {
   const doc = await this.findOne({ _id: sessionID })
   if (doc) {
     if (doc.members.length < 2) {
@@ -29,7 +40,7 @@ sessionSchema.statics.delete = async (sessionID, username) => {
 }
 
 // 添加成员
-sessionSchema.statics.add = async (sessionID, username) => {
+sessionSchema.statics.addMember = async (sessionID, username) => {
   const doc = await this.findOne({ _id: sessionID })
   if (doc) {
     doc.members.push(username)

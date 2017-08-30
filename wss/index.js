@@ -2,7 +2,6 @@ const WebSocket = require('ws')
 const { Session } = require('../model')
 const util = require('koa-session/lib/util')
 const cookie = require('cookie')
-const message = require('./message')
 
 module.exports = (server, app) => {
   const wss = new WebSocket.Server({
@@ -61,25 +60,50 @@ module.exports = (server, app) => {
  * @param {*} mapWs
  */
 async function handleMessage(data, ws, mapWs) {
+  // 获取成员
+  let members = data.session.members
+  mapWs.forEach((value, key) => {
+    if (value === ws) {
+      members.push(key)
+    }
+  })
+  members = [...new Set(members)]
 
-  let result
+  // 1. 转发消息
+  members.forEach(value => {
+    if (mapWs[value] !== ws && mapWs[value].readyState === WebSocket.OPEN) {
+      mapWs[value].send(data.message)
+    }
+  })
 
-  // 1. 创建会话
+  // 2. 创建会话
   const sessionID = data.session.id
   const doc = sessionID && await Session.findById(sessionID)
   if (!sessionID || !doc) {             // id 不存在则创建新的会话
-    const members = data.session.members
-    mapWs.forEach((value, key) => {
-      if (value === ws) {
-        members.push(key)
-      }
-    })
-
-    result = await Session.create({ name: data.session.name, members: [...new Set(members)] })
+    const result = await Session.create({ name: data.session.name, members })
+    ws.send(result)
   }
 
-  // 2. 转发消息
+  // 3. 存储消息
+  Session.addMessage(sessionID, data.message)
+}
 
-
-  ws.send(result)
+/**
+ * 一条完整的消息示例
+ */
+const data = {
+  session: {
+    name: '回话名称',
+    id: '回合唯一标识',           // id 和 members 必选其一
+    members: ['moohng', 'qqqqqq']
+  },
+  message: {
+    from: {
+      username: 'moohng'
+    },
+    content: {
+      text: '这是文本消息'
+    },
+    date: 789789796
+  }
 }
