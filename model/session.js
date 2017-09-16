@@ -2,8 +2,9 @@ const mongoose = require('mongoose')
 
 const sessionSchema = new mongoose.Schema({
   name: { type: String, default: '无主题' },
+  head_icon: String,
   members: [String],
-  messages: [String],
+  messages: [Object],
   create_time: { type: Date, default: Date.now }
 })
 
@@ -18,7 +19,7 @@ sessionSchema.statics.addMessage = async (sessionID, message) => {
   const doc = await this.findOne({ _id: sessionID })
   if (doc) {
     const messages = doc.messages || []
-    messages.push(JSON.stringify(message))
+    messages.push(message)
     await this.updateOne({ _id: sessionID }, { messages })
   }
 }

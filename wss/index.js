@@ -33,7 +33,7 @@ module.exports = (server, app) => {
       console.log('收到消息：', data)
 
       // 消息处理
-      handleMessage(data, ws, app.mapWs)
+      handleMessage(JSON.parse(data), ws, app.mapWs)
     })
 
     // 断开连接
@@ -60,30 +60,28 @@ module.exports = (server, app) => {
  * @param {*} mapWs
  */
 async function handleMessage(data, ws, mapWs) {
-  // 获取成员
-  let members = data.session.members
-  mapWs.forEach((value, key) => {
-    if (value === ws) {
-      members.push(key)
-    }
-  })
-  members = [...new Set(members)]
-
-  // 1. 转发消息
-  members.forEach(value => {
-    if (mapWs[value] !== ws && mapWs[value].readyState === WebSocket.OPEN) {
-      mapWs[value].send(data.message)
-    }
-  })
-
-  // 2. 创建会话
-  const sessionID = data.session.id
-  const doc = sessionID && await Session.findById(sessionID)
+  // 1. 创建或查找会话
+  let sessionID = data.session.id
+  let doc = sessionID && await Session.findById(sessionID)
   if (!sessionID || !doc) {             // id 不存在则创建新的会话
+    const members = data.session.members
+    members.push(data.message.from.username)
+    members = [...new Set(members)]
     const result = await Session.create({ name: data.session.name, members })
-    ws.send(result)
+    sessionID = result.id
   }
-
+  // 获取成员
+  doc = await Session.findById(sessionID)
+  const members = doc.members
+  // 1. 转发消息
+  data.session.id = sessionID
+  members.forEach(value => {
+    const target = mapWs.get(value)
+    console.log('==========', target)
+    if (target !== ws && target.readyState === WebSocket.OPEN) {
+      target.send(JSON.stringify(data))
+    }
+  })
   // 3. 存储消息
   Session.addMessage(sessionID, data.message)
 }
@@ -93,9 +91,9 @@ async function handleMessage(data, ws, mapWs) {
  */
 const data = {
   session: {
-    name: '回话名称',
-    id: '回合唯一标识',           // id 和 members 必选其一
-    members: ['moohng', 'qqqqqq']
+    name: '会话名称',
+    id: '会话唯一标识',           // id 和 members 必选其一
+    members: ['moohng', 'qqqqqq']   // 新建会话时必选
   },
   message: {
     from: {
@@ -106,4 +104,32 @@ const data = {
     },
     date: 789789796
   }
+}
+
+/** 一个会话示例 */
+const session = {
+  name: '会话名称',
+  id: '会话唯一标识',
+  head_icon: '',
+  members: ['moohng', 'qqqqqq'],
+  messages: [
+    {
+      from: {
+        username: 'moohng'
+      },
+      content: {
+        text: '这是文本消息'
+      },
+      date: 789789796
+    },
+    {
+      from: {
+        username: 'moohng'
+      },
+      content: {
+        text: '这是文本消息'
+      },
+      date: 789789796
+    }
+  ]
 }

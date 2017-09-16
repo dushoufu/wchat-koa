@@ -36,7 +36,7 @@ userSchema.statics.login = async function (ctx, user) {
   if (doc) {
     user.password = null
     ctx.session.user = user
-    return { code: 0, message: '登录成功' }
+    return { code: 0, message: '登录成功', user }
   }
   return { code: 99999, message: '登陆失败' }
 }
@@ -52,7 +52,7 @@ userSchema.statics.logout = async function (ctx) {
 // check
 userSchema.statics.check = async function (ctx) {
   if (!ctx.session.isNew) {
-    return { code: 0, message: '已登录' }
+    return { code: 0, message: '已登录', user: ctx.session.user }
   }
   return { code: 10001, message: '未登陆' }
 }
