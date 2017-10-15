@@ -1,11 +1,10 @@
 const production = {
-	port: process.env.PORT || 13606,
+	port: process.env.PORT || 10086,
 	mongo_host: 'mongodb://39.108.137.234:28332/wchat',
 	allow_origin: 'http://mohng.com'
 };
 
 const development = Object.assign({}, production, {
-	port: 30600,
 	allow_origin: 'http://localhost:8808'
 });
 
